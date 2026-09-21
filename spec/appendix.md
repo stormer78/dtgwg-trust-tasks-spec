@@ -148,6 +148,24 @@ If any step fails, the *consumer* returns an [[ref: error response]] per [Error 
 
 *This appendix is informative.*
 
+#### Framework version 0.6.0
+
+This revision is **additive**. The document wire format gains no member and loses none, and every document conforming to 0.5.0 still conforms. It adds one new obligation on *consumers*, and one on *Trust Task specifications*. Each applies only where an exchange is cited from outside the framework as evidence that it completed.
+
+* **Evidence that a cited exchange completed ([Evidence That a Cited Exchange Completed](#evidence-that-a-cited-exchange-completed)).** [Binding a Citation to the Document It Names](#binding-a-citation-to-the-document-it-names) fixed *which* exchange a citation names, and said nothing about whether that exchange **completed**. A credential citing a cancelled, failed or still-open exchange binds as well as one citing a completed exchange. The completion rule lived instead in individual *Trust Task specifications* (`witness/session/submit/0.1`, `vetting/session/0.1`) and in the companion credential specification, and none of those versions generalised. [[ref: Outcome evidence]] is now defined once. It is the initiating document together with a terminal success document, which a *consumer* relying on a citation as evidence of completion **MUST** pair by four checks:
+    1. the citation binds the initiating document;
+    2. the terminal document belongs to that exchange, by `threadId` routed through the initiating document **and** by the binding its governing specification declares;
+    3. its `type` is the *declared* outcome-evidence response;
+    4. its `proof` verifies under the initiating document's `recipient`.
+
+    Each check closes a case a weaker rule decides wrongly: a minted `threadId`, a cancelled task's control `#response`, a response signed by the holder, and a `threadId` reused across exchanges. All four were exercised against real Trust Task documents before release.
+
+* **Declaring outcome evidence ([Specification Requirements](#specification-requirements) item 20).** A *Trust Task specification* whose exchanges may be cited as evidence of completion declares which success response is its outcome evidence. For that response it defines a payload schema, requires `proof` and `issuedAt`, and **SHOULD** declare `durable` retention. It declares the payload members that bind the response to the initiating document: the initiating document's `id` and task digest, or, only where the initiator must also issue the citing artifact, a fresh value such as a challenge. It requires the initiating document to carry `recipient`. The declaration is made by the specification governing the **initiating** document, because an exchange may close with the response to a task conducted on its thread under another specification. A specification that declares nothing is not thereby non-conforming, but its exchanges cannot be cited as evidence of completion.
+
+* **Outcome evidence carries the exchange's correlators ([Privacy Considerations](#privacy-considerations) item 6).** Presenting outcome evidence discloses whole Trust Task documents, including their `id`, `threadId` and both parties' identifiers, whatever the citing artifact's own proof mechanism. Whether a composed presentation is unlinkable is therefore assessed across the composition. The Verifiable Trust Infrastructure specification is added as an informative reference for that.
+
+* **Companion changes in the registry.** The registry already carries the declarations for its two cited exchanges, `witness/session/0.1` and `vetting/session/0.1`, through an `outcomeEvidence` front-matter key that the registry build checks against item 20. What remains is to publish a 0.6 framework envelope schema, identical in shape to 0.5's, so that a specification can declare 0.6.0 as its target framework version.
+
 #### Framework version 0.5.0
 
 This revision is **additive**, with one deprecation. The document wire format gains no member and loses none; every document conforming to 0.4.0 still conforms. Three new front-matter declarations are **SHOULD**, each with a fail-safe reading of an absent value, so no already-published *Trust Task specification* becomes non-conforming for want of them.

@@ -46,7 +46,7 @@ A *Trust Task document* **MAY** contain additional top-level members beyond thos
 >   },
 >   "proof": {
 >     "type": "DataIntegrityProof",
->     "cryptosuite": "eddsa-rdfc-2022",
+>     "cryptosuite": "eddsa-jcs-2022",
 >     "verificationMethod": "did:web:org.example#key-1",
 >     "created": "2026-06-10T14:00:00Z",
 >     "proofPurpose": "assertionMethod",
@@ -249,6 +249,8 @@ A *Trust Task document* **MAY** identify the parties involved by including the `
 * `recipient` — a *Verifiable Identifier* identifying the *party* the *issuer* expects to act upon the document.
 
 The framework does not constrain the VID scheme used: a DID, an X.509 subject, an OIDC subject identifier, a key thumbprint, or any other identifier whose controller is verifiable under the *consumer*'s trust framework is acceptable.
+
+> **A group as a party** *(non-normative)*. A *party* need not be a single agent. A group that holds an authority jointly — for example under a t-of-n threshold key, where no member can exercise it alone — is a *party* when it has a *VID* of its own, such as a DID whose verification method is the group's key. It then fills `issuer` or `recipient` like any other *party*, and every identity rule of this framework applies to it unchanged. Which members may act for the group, and how a member proves it belongs, is an authorization question ([Consumer Requirements](#consumer-requirements) item 10), answered by the governing *Trust Task specification* or the *consumer*'s trust framework rather than by the document envelope. The same holds for an audience that is bounded but not enumerable when the document is created: the group's *VID* is the `recipient`, and a *Trust Task specification* defines how a presenter proves membership.
 
 A [[ref: VID]] is compared by exact string equality wherever this framework requires a VID-to-VID comparison (notably the in-band-vs-transport cross-check in [Precedence of In-Band over Transport-Derived Identity](#precedence-of-in-band-over-transport-derived-identity), the recipient-enforcement rule in [Consumer Requirements](#consumer-requirements) item 5, and the proof-binding rule in [Proof](#proof)). *Producers* **SHOULD** emit *VID*s in their canonical form for the scheme in use — no leading or trailing whitespace, no normalization of case-sensitive segments, and (for schemes that admit equivalent forms) the form that the scheme's authority designates as canonical. A *consumer* **MAY** reject a *Trust Task document* whose `issuer`, `recipient`, or any *VID*-typed `payload` member is not in canonical form with `malformedRequest`; a *consumer* that accepts non-canonical input **MUST NOT** silently normalize before applying any framework rule that compares the value — normalization changes the string, and the framework's comparisons are over the unchanged bytes.
 
@@ -1065,7 +1067,7 @@ Under `identityMismatch` a *consumer* **SHOULD** omit `inResponseTo.id`: per [Th
 >   },
 >   "proof": {
 >     "type": "DataIntegrityProof",
->     "cryptosuite": "eddsa-rdfc-2022",
+>     "cryptosuite": "eddsa-jcs-2022",
 >     "verificationMethod": "did:web:maintainer.example#key-1",
 >     "created": "2026-06-11T14:05:00Z",
 >     "proofPurpose": "assertionMethod",

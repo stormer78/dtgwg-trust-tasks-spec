@@ -125,7 +125,7 @@ Both codes are namespaced under the emitting specification's own slug, per rule 
   },
   "proof": {
     "type": "DataIntegrityProof",
-    "cryptosuite": "eddsa-rdfc-2022",
+    "cryptosuite": "eddsa-jcs-2022",
     "verificationMethod": "did:web:org.example#key-1",
     "created": "2026-06-10T14:00:00Z",
     "proofPurpose": "assertionMethod",
@@ -148,9 +148,9 @@ If any step fails, the *consumer* returns an [[ref: error response]] per [Error 
 
 *This appendix is informative.*
 
-#### Unreleased
+#### Framework version 0.7.0
 
-This revision is **additive**. The document wire format is unchanged, and every document conforming to 0.6.0 still conforms. It widens what a private specification may use as its *Type URI*, and adds one obligation on *consumers*. A *consumer* that parses *Type URIs* by assuming `https` must be updated before it can accept documents of a private specification that uses another scheme, and a *consumer* that cannot verify `eddsa-jcs-2022` must add it.
+This revision is **additive**. Every document conforming to 0.6.0 still conforms. The wire format gains one optional member, `extCritical`, and the standard error codes gain `unsupportedExtension`. It widens what a private specification may use as its *Type URI*, names a baseline cryptosuite that every *consumer* verifies, and lets a *producer* mark an `ext` namespace critical. Two changes can require work from an existing *consumer*: one that parses *Type URIs* by assuming `https` must be updated before it can accept documents of a private specification that uses another scheme, and one that cannot verify `eddsa-jcs-2022` must add it.
 
 * **A private *Type URI* may be any absolute URI ([Type URI](#type-uri), [Private and Unpublished Trust Task Specifications](#private-and-unpublished-trust-task-specifications)).** The scheme had to be `https`, which tied every specification's name to DNS and a certificate authority even where no *consumer* ever dereferences it. Specifications in the public registry keep the `https://trusttasks.org/spec/<slug>/<MAJOR.MINOR>` form unchanged. A private specification may now also be named by a DID URL or a URN. Every form except URNs uses the existing path shape, ending `/spec/<slug>/<MAJOR.MINOR>`; a URN ends `:spec:<slug-segments>:<MAJOR.MINOR>`, with the slug's `/` written as `:`. The slug and version grammars, the reserved slugs and the reserved fragments apply to every form, and `http` is excluded from every form.
 
@@ -161,6 +161,16 @@ This revision is **additive**. The document wire format is unchanged, and every 
 * **A baseline cryptosuite ([Cryptosuites](#cryptosuites)).** The framework left the suite open and named no floor, so two conforming implementations were not guaranteed to verify each other's proofs. Every conforming *consumer* **MUST** now verify `eddsa-jcs-2022`. This is a floor on verification, not a constraint on signing: a *producer* chooses the suite from its key, signs with the baseline when it does not know what the *consumer* verifies, and may sign with another suite where the specification, a trust framework, or the *recipient*'s published keys indicate the *consumer* verifies it. *Consumers* **SHOULD** also verify `ecdsa-jcs-2019` with P-256, for hardware-backed signers. A `proof` in a suite the *consumer* does not implement is rejected with `proofInvalid`, never treated as absent. A *Trust Task specification* may require a particular suite.
 
 * **Quantum-resistant suites pinned to the W3C draft.** `mldsa44-jcs-2024` (ML-DSA-44) and `slhdsa128-jcs-2024` (SLH-DSA-SHA2-128s) are not part of the baseline, but their identifiers and Multikey encodings are pinned to the W3C Quantum-Resistant Cryptosuites draft so that early adopters interoperate. A later change in the draft is adopted as a new entry, not a reinterpretation.
+
+* **A producer may mark an `ext` namespace critical ([Marking a Namespace Critical](#marking-a-namespace-critical)).** Rule 5 of [The `ext` Extension Member](#the-ext-extension-member) makes every namespace safe to ignore, so a *producer* could not tell an ignored namespace from an understood one, and a *consumer* that dropped a namespace the document's meaning depends on reached a verdict the *producer* never asked for. A *Trust Task specification* that allows `ext` at an object level **MAY** now also allow a sibling `extCritical` array naming namespaces that are critical. A *consumer* that does not recognize a critical namespace **MUST** reject the document with the new standard error code `unsupportedExtension` ([Standard Error Codes](#standard-error-codes)). A *producer* **MUST NOT** mark a namespace that is merely useful, and **SHOULD** establish support before marking. Opting in is per specification and per object level, so no existing document changes meaning.
+
+* **Examples sign with the baseline suite.** Example 1 in [Top-Level Members](#top-level-members), the error-response example and the example in [Appendix A](#appendix-a-example-trust-task-specification) carried `eddsa-rdfc-2022`, which a *consumer* is not required to verify. They now sign with `eddsa-jcs-2022`, the baseline named in [Cryptosuites](#cryptosuites).
+
+* **The Abstract states the bilateral model.** The Abstract spoke of work "between two or more parties" while [Terminology](#terminology) defines each document as bilateral. The Abstract now says that exchanges between more than two parties are made of bilateral documents the framework links.
+
+* **A group as a party ([The `issuer` and `recipient` Members](#the-issuer-and-recipient-members)).** A new non-normative note: a group that holds an authority jointly, such as under a threshold key, is a *party* when it has its own *VID*, and whether a given member may act for it is an authorization question, not a matter for the envelope.
+
+* **Companion changes in the registry.** What remains is to publish a 0.7 framework envelope schema, which adds the `ExtCritical` `$def` that [Marking a Namespace Critical](#marking-a-namespace-critical) refers specifications to, and to sign the `acl/change-role/0.1` example with `eddsa-jcs-2022` to match [Appendix A](#appendix-a-example-trust-task-specification).
 
 #### Framework version 0.6.0
 

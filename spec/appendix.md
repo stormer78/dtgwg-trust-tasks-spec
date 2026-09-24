@@ -177,6 +177,8 @@ This revision is **additive**. Every document conforming to 0.6.0 still conforms
 
 * **A group as a party ([The `issuer` and `recipient` Members](#the-issuer-and-recipient-members)).** A new non-normative note: a group that holds an authority jointly, such as under a threshold key, is a *party* when it has its own *VID*, and whether a given member may act for it is an authorization question, not a matter for the envelope.
 
+* **A private transport binding is named like a private *Type URI* ([Binding Namespace](#binding-namespace)).** A private binding URI had to use "an authority the publisher controls", with no shape stated. It now takes the same forms as a private *Type URI*: a path ending `/binding/<slug>/<MAJOR.MINOR>` under an HTTPS authority or a DID, or a URN ending `:binding:<slug-segments>:<MAJOR.MINOR>`. It still **MUST NOT** use `https://trusttasks.org/`, `http` is excluded, and the publisher-controlled namespace is a **SHOULD**, as it is for a private *Type URI*. Only an `https` binding URI is dereferenced.
+
 * **Security considerations for suites and criticality ([Cryptosuite Downgrade](#cryptosuite-downgrade), [Stripping a Criticality Marking](#stripping-a-criticality-marking)).** Two new subsections set out what the baseline cryptosuite and `extCritical` do and do not protect against: a substituted or removed proof, an *issuer* key of a weaker type, and a marking removed from or added to an unsigned document.
 
 * **Producer obligations for `extCritical` ([Producer Requirements](#producer-requirements)).** The producer rules of [Marking a Namespace Critical](#marking-a-namespace-critical) are restated where the other producer obligations are listed.

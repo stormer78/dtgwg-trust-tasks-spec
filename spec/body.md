@@ -1287,7 +1287,17 @@ The `/binding/` subtree and the `/spec/` subtree of [Type URI](#type-uri) are **
 
 A *transport binding* specification published through the registry **SHOULD** live at `bindings/<slug>/<MAJOR.MINOR>/spec.md` in the framework's source tree, paralleling the `specs/<slug>/<MAJOR.MINOR>/` layout for [[ref: Trust Task specifications]]. The grammar and content requirements for *transport binding* specifications are defined in [What a Transport Binding Specifies](#what-a-transport-binding-specifies).
 
-The authority rule of [Private and Unpublished Trust Task Specifications](#private-and-unpublished-trust-task-specifications) item 1 — that private specifications **MUST NOT** be served from the `https://trusttasks.org/` authority — applies to private transport bindings equivalently: a private transport binding **MUST** use an authority the publisher controls and **MUST NOT** claim to identify a resource at `https://trusttasks.org/binding/...`.
+A private *transport binding* — one not published through the registry — is named on the terms [Private and Unpublished Trust Task Specifications](#private-and-unpublished-trust-task-specifications) items 1 and 4 set for a private *Type URI*:
+
+1. Its URI **MUST NOT** be served from, or claim to identify a resource at, the `https://trusttasks.org/` domain, so a private binding URI can never equal a registry one, even where the two share a slug.
+2. Its URI **MUST** be an absolute URI in one of two shapes: a path form ending `/binding/<slug>/<MAJOR.MINOR>`, or a URN form ending `:binding:<slug-segments>:<MAJOR.MINOR>`, with the slug's `/` written as `:`. The scheme **MUST NOT** be `http`. The slug and version grammars above apply to both shapes.
+3. Its URI **SHOULD** sit in a namespace the publisher controls — an HTTPS authority, a DID the publisher controls, or a URN namespace the publisher is entitled to assign names in — so that it uniquely identifies the binding. A publisher can then name a private specification and the binding it travels over under one authority:
+   ```
+   https://example.com/trust-tasks/binding/<slug>/<MAJOR.MINOR>
+   did:example:123456789abcdefghi/binding/<slug>/<MAJOR.MINOR>
+   urn:example:tasks:binding:<slug-segments>:<MAJOR.MINOR>
+   ```
+4. A binding URI is a name, compared by exact string equality. Only an `https` binding URI is dereferenced; a binding named in any other scheme is distributed out of band.
 
 ## Discovery and Capability Negotiation
 

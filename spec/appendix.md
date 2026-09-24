@@ -4,7 +4,7 @@
 
 *This appendix is informative.*
 
-This appendix shows the elements an individual [[ref: Trust Task specification]] declares in order to satisfy [Specification Requirements](#specification-requirements). The declarations below are reproduced from the registered `acl/change-role` 0.1 specification, so every element has a live counterpart that can be dereferenced; that registry entry, not this appendix, is normative for the task itself.
+This appendix shows the elements an individual [[ref: Trust Task specification]] declares in order to satisfy [Specification Requirements](#specification-requirements). The declarations below are those of the registered `acl/change-role` 0.1 specification, brought up to this framework version: the registry entry predates several of the declarations shown and is being updated to match ([Appendix B](#appendix-b-changelog)). That registry entry, not this appendix, is normative for the task itself.
 
 #### Front Matter
 
@@ -13,17 +13,23 @@ This appendix shows the elements an individual [[ref: Trust Task specification]]
 | Slug | `acl/change-role` |
 | Version | `0.1` |
 | [[ref: Type URI]] | `https://trusttasks.org/spec/acl/change-role/0.1` |
-| Target framework version | `0.5.0` |
+| Target framework version | `0.7.0` |
 | Maturity level | `draft` |
-| `issuer` party | The changing authority. **REQUIRED**. No [[ref: VID]] scheme restriction is declared. |
-| `recipient` party | The ACL maintainer. **REQUIRED**. No *VID* scheme restriction is declared. |
+| `issuer` party | The changing authority. **REQUIRED**. No [[ref: VID]] scheme restriction is declared. `identifierScope: pairwise`. |
+| `recipient` party | The ACL maintainer. **REQUIRED**. No *VID* scheme restriction is declared. `identifierScope: pairwise`. |
 | Outcome | The *issuer* records to the *recipient* the transition of a subject's role within an access-control list, subject to an optimistic concurrency check against the subject's prior role. |
-| Proof requirement | **REQUIRED**. Rationale: role changes are the highest-impact ACL operation — a promotion extends privilege, a demotion withdraws it — so a non-repudiable, transport-independent record is necessary for audit, dispute resolution, and downstream parties that retained the prior grant (see [When to Include a Proof](#when-to-include-a-proof)). |
-| `issuedAt` requirement | **REQUIRED**. Rationale: a role change overwrites the entry rather than incrementing it, so a stale copy applied out of order silently reinstates a role an operator has already moved the subject off; the issue time is what lets the maintainer order two changes to the same entry and refuse the older one. |
+| Proof requirement | **REQUIRED**. Rationale: role changes are the highest-impact ACL operation — a promotion extends privilege, a demotion withdraws it — so a non-repudiable, transport-independent record is necessary for audit, dispute resolution, and downstream parties that retained the prior grant (see [When to Include a Proof](#when-to-include-a-proof)). No cryptosuite is required beyond the baseline of [Cryptosuites](#cryptosuites). |
+| `issuedAt` requirement | **REQUIRED**. Rationale: a role change overwrites the entry rather than incrementing it, so a stale copy applied out of order silently reinstates a role an operator has already moved the subject off; the issue time is what lets the maintainer order two changes to the same entry and refuse the older one. The task is *consequential*, so this is also required by [Specification Requirements](#specification-requirements) item 17. The specification does not narrow the *consumer*'s acceptance window. |
 | Side effects | `mutating` — reassigns a subject's role in the ACL; recoverable by changing it back. |
-| Exposure | `discloses: none`. The specification does not act as the subject. |
+| Exposure | `discloses: none`, `actsAsSubject: false`, `ingests: personal`. Rationale: the request names the subject by *VID* and may carry a free-text `reason` about them. |
+| Retention | `durable`. Rationale: the maintainer keeps the change, and the signed request that made it, as the audit record of who changed the subject's role; that audit is what the proof requirement exists for. |
 | Subject path | `/subject` |
 | JSON-LD `@context` | Not published at this version. |
+
+Two further declarations are made in the specification's prose rather than in front matter:
+
+* **Authorization evidence** ([Specification Requirements](#specification-requirements) item 15). The task presupposes that the *issuer* holds authority to change roles in the maintainer's access-control list — typically an administrative role in that same list. Whether it does is decided by the maintainer's own policy ([Consumer Requirements](#consumer-requirements) item 10); a verified `proof` establishes who asked, not that they may.
+* **Free-text members** ([Specification Requirements](#specification-requirements) item 19). `reason` is the one free-text member, bounded by `maxLength` 1024. It is read by the maintainer's operators and appears in its audit log, so it is retained with the change. It is authored by the *issuer*, whose `proof` covers it, and is rendered as the *issuer*'s statement, never as the maintainer's.
 
 #### Payload JSON Schema
 
@@ -58,8 +64,8 @@ Served at the *Type URI* under content negotiation for `application/schema+json`
       "description": "Optional human-readable rationale."
     },
     "ext": {
-      "$ref": "../../../_framework/0.1/framework.schema.json#/$defs/Ext",
-      "description": "Ecosystem-defined extension members per SPEC.md §4.5.1."
+      "$ref": "../../../_framework/0.7/framework.schema.json#/$defs/Ext",
+      "description": "Ecosystem-defined extension members per the framework's ext rules."
     }
   },
   "$defs": {
@@ -76,8 +82,8 @@ Served at the *Type URI* under content negotiation for `application/schema+json`
           "$ref": "../../_shared/0.1/acl-entry.schema.json#/$defs/AclEntry"
         },
         "ext": {
-          "$ref": "../../../_framework/0.1/framework.schema.json#/$defs/Ext",
-          "description": "Ecosystem-defined extension members per SPEC.md §4.5.1."
+          "$ref": "../../../_framework/0.7/framework.schema.json#/$defs/Ext",
+          "description": "Ecosystem-defined extension members per the framework's ext rules."
         }
       }
     }
@@ -136,11 +142,12 @@ Both codes are namespaced under the emitting specification's own slug, per rule 
 
 This document carries a `proof` member because the specification declares `proof` as **REQUIRED** in [Front Matter](#front-matter). A [[ref: consumer]]:
 
-1. Resolves the document's `type` URI to learn the *target framework version* (`0.5.0`) and fetches the framework schema at `https://trusttasks.org/spec/trust-task/0.5.0`. The outer document structure is validated against it.
+1. Matches the document's `type` against the *Type URIs* it supports, dereferencing it where needed, to learn the *target framework version* (`0.7.0`), and fetches the framework schema at `https://trusttasks.org/spec/trust-task/0.7.0`. The outer document structure is validated against it.
 2. Fetches the payload schema at the same `type` URI under content negotiation for `application/schema+json`. The `payload` is validated against it.
 3. Verifies the `proof` per [Proof](#proof) against the *VID* in `issuer`.
 4. Confirms `recipient` matches the consumer's own *VID*, and that `issuedAt` does not lie in the consumer's own future beyond its skew tolerance. This document declares no `expiresAt`; where one is present it is checked here too.
 5. Applies the checks the specification adds on top of the framework's — for `acl/change-role`, that the subject's current role equals `payload.fromRole`, failing which the *consumer* answers `acl/change-role:stateMismatch`. The framework knows nothing of this check; it is the part [Specification Requirements](#specification-requirements) obliges each specification to state for itself.
+6. Decides under its own policy whether the *issuer* may change roles in this list ([Consumer Requirements](#consumer-requirements) item 10), and records the document's `id` so that a second arrival does not change the role again (item 11).
 
 If any step fails, the *consumer* returns an [[ref: error response]] per [Error Responses](#error-responses).
 
@@ -170,9 +177,23 @@ This revision is **additive**. Every document conforming to 0.6.0 still conforms
 
 * **A group as a party ([The `issuer` and `recipient` Members](#the-issuer-and-recipient-members)).** A new non-normative note: a group that holds an authority jointly, such as under a threshold key, is a *party* when it has its own *VID*, and whether a given member may act for it is an authorization question, not a matter for the envelope.
 
+* **Security considerations for suites and criticality ([Cryptosuite Downgrade](#cryptosuite-downgrade), [Stripping a Criticality Marking](#stripping-a-criticality-marking)).** Two new subsections set out what the baseline cryptosuite and `extCritical` do and do not protect against: a substituted or removed proof, an *issuer* key of a weaker type, and a marking removed from or added to an unsigned document.
+
+* **Producer obligations for `extCritical` ([Producer Requirements](#producer-requirements)).** The producer rules of [Marking a Namespace Critical](#marking-a-namespace-critical) are restated where the other producer obligations are listed.
+
+* **Slugs are scoped to their authority ([Type URI](#type-uri), [Pattern Grammar](#pattern-grammar)).** A private specification may share a slug with a registry specification. Because a private specification can never be named under `https://trusttasks.org/`, the two *Type URIs* never collide: a *Type URI* identifies a specification by its whole string, and a discoverer chooses among discovery results by that string, not by slug.
+
+* **A specification may mention ceremonies ([The `ceremony` Member](#the-ceremony-member)).** The rule that a specification **MUST NOT** declare anything about ceremonies is relaxed: it **MAY** refer to them in prose, and still **MUST NOT** make conformance depend on being a ceremony step or constrain the `ceremony` member.
+
+* **`unsupportedType` for an unpublished reserved type ([Reserved Response-Type Slugs](#reserved-response-type-slugs)).** A *consumer* that answers a document of a reserved type whose specification is not yet published now returns `unsupportedType`; it returned `unsupportedVersion`, which implies the type was recognized.
+
+* **`validated` may lead to `expired` ([Document Lifecycle](#document-lifecycle)).** A document can expire between validation and acceptance, and the table now permits the transition. Its validation checks also include the timestamp window of [Consumer Requirements](#consumer-requirements) item 13.
+
+* **Appendix A brought up to date.** The example now targets 0.7.0 and makes the declarations current [Specification Requirements](#specification-requirements) expect: `identifierScope`, `exposure.ingests`, `retention`, authorization evidence and the free-text `reason` member. The consumer walkthrough adds the authorization and duplicate-execution steps.
+
 * **Editorial fixes.** Text that still assumed every *Type URI* is dereferenced — the payload-schema, JSON-LD context and schema-validation rules — now allows for out-of-band distribution. Stale statements about the discovery specification's `proof` requirement, and phrases dated "this version" that meant 0.5.0 or 0.4.0, are corrected. Member lists now name `parentThreadId`, `ceremony` and `extCritical` where they were missing. The restated slug-reservation rule matches [Type URI](#type-uri), and cross-references in [Marking a Namespace Critical](#marking-a-namespace-critical) name the `ext` rules they mean. RFC 6901 is added to the references. Example 4 now precedes Example 4a, and Example 5 no longer reuses Example 4's thread. Spelling is US throughout, grammar fixes are made, and BCP 14 keywords are bolded where they had been left plain.
 
-* **Companion changes in the registry.** What remains is to publish a 0.7 framework envelope schema, which adds the `ExtCritical` `$def` that [Marking a Namespace Critical](#marking-a-namespace-critical) refers specifications to, to publish `trust-task-error/0.6`, whose closed list of standard codes gains `unsupportedExtension`; and to sign the `acl/change-role/0.1` example with `eddsa-jcs-2022` to match [Appendix A](#appendix-a-example-trust-task-specification).
+* **Companion changes in the registry.** What remains is to publish a 0.7 framework envelope schema, which adds the `ExtCritical` `$def` that [Marking a Namespace Critical](#marking-a-namespace-critical) refers specifications to; to publish `trust-task-error/0.6`, whose closed list of standard codes gains `unsupportedExtension`; and to bring the `acl/change-role/0.1` entry into line with [Appendix A](#appendix-a-example-trust-task-specification).
 
 #### Framework version 0.6.0
 
